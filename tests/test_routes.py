@@ -12,7 +12,6 @@ from tests.factories import AccountFactory
 from service.common import status  # HTTP Status Codes
 from service.models import db, Account, init_db
 from service.routes import app
-from datetime import date
 from service import talisman
 
 DATABASE_URI = os.getenv(
@@ -144,7 +143,7 @@ class TestAccountService(TestCase):
         # Then I should be able to see all three accounts with ids 1, 2, and 3 in the service
         self.assertEqual(len(created_accounts), len(response_accounts))
         self.assertSetEqual(generated_ids, response_ids)
-        
+
     def test_read_account(self):
         """ It should be able to read an account"""
         # Given three accounts in the service with ids 1, 2 and 3
@@ -163,12 +162,12 @@ class TestAccountService(TestCase):
         self.assertEqual(response_account["address"], account_to_view.address)
         self.assertEqual(response_account["phone_number"], account_to_view.phone_number)
         self.assertEqual(response_account["date_joined"], account_to_view.date_joined.strftime("%Y-%m-%d"))
-    
+
     def test_read_account_does_not_exist(self):
         """ It shouldn't read an account that doesn't exist """
         response = self.client.get("/accounts/1")
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
-    
+
     def test_read_invalid_account_id(self):
         """ It should validate that the id to read is valid """
         response = self.client.get("/accounts/sample")
@@ -193,7 +192,7 @@ class TestAccountService(TestCase):
         self.assertEqual(status.HTTP_200_OK, update_response.status_code)
         updated_account = update_response.get_json()
 
-        # Then the information must have changed when I view the account again 
+        # Then the information must have changed when I view the account again
         self.assertNotEqual(original_account["name"], updated_account["name"])
         self.assertNotEqual(original_account["email"], updated_account["email"])
         self.assertNotEqual(original_account["address"], updated_account["address"])
@@ -209,12 +208,12 @@ class TestAccountService(TestCase):
 
     def test_update_account_does_not_exist(self):
         """ It shouldn't update an account that doesn't exist """
-        response = self.client.put(f"/accounts/1")
+        response = self.client.put("/accounts/1")
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
-    
+
     def test_update_invalid_account_id(self):
         """ It should validate that the id to update is valid """
-        response = self.client.put(f"/accounts/sample")
+        response = self.client.put("/accounts/sample")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_delete_account(self):
@@ -228,7 +227,7 @@ class TestAccountService(TestCase):
         # When I delete the account
         delete_response = self.client.delete(f"/accounts/{created_account['id']}")
         self.assertEqual(status.HTTP_204_NO_CONTENT, delete_response.status_code)
-        
+
         # Then I shouldn't be able to view and interact with the account anymore
         # Cannot View
         view_response = self.client.get(f"/accounts/{created_account['id']}")
@@ -246,7 +245,7 @@ class TestAccountService(TestCase):
         """ It shouldn't delete an account that doesn't exist """
         response = self.client.delete("/accounts/1")
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
-    
+
     def test_delete_invalid_account_id(self):
         """ It should validate that the id to delete is valid """
         response = self.client.delete("/accounts/sample")
@@ -256,11 +255,11 @@ class TestAccountService(TestCase):
         self._create_accounts(3)
 
         # DELETE /account is not allowed
-        response = self.client.delete(f"/accounts")
+        response = self.client.delete("/accounts")
         self.assertEqual(status.HTTP_405_METHOD_NOT_ALLOWED, response.status_code)
 
         # PUT /account is not allowed
-        response = self.client.put(f"/accounts")
+        response = self.client.put("/accounts")
         self.assertEqual(status.HTTP_405_METHOD_NOT_ALLOWED, response.status_code)
 
     def test_secure_headers(self):
@@ -276,7 +275,6 @@ class TestAccountService(TestCase):
         }
         for key, value in expected_headers.items():
             self.assertEqual(response.headers.get(key), value)
-
 
     def test_cors_security(self):
         """ It should have secure headers """
