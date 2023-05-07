@@ -61,9 +61,14 @@ def create_accounts():
 # LIST ALL ACCOUNTS
 ######################################################################
 
-# ... place you code here to LIST accounts ...
 @app.route("/accounts", methods=["GET"])
 def list_accounts():
+    """
+    List all account
+    This end point will return the information of all accounts
+    """
+    app.logger.info(f"Request to view all Accounts")
+
     accounts = Account.all()
     accounts_serializable = [account.serialize() for account in accounts]
     return accounts_serializable, status.HTTP_200_OK
@@ -72,18 +77,19 @@ def list_accounts():
 # READ AN ACCOUNT
 ######################################################################
 
-# ... place you code here to READ an account ...
 @app.route("/accounts/<id>", methods=["GET"])
 def read_account(id):
+    """
+    Read an account
+    This end point will return the information of the Account with the given id
+    """
+    app.logger.info(f"Request to view an Account with id: {id}")
+
     # Validate that id is a number
-    if not id.isnumeric():
-        return "Id parameter must be numeric", status.HTTP_400_BAD_REQUEST
-    parsed_id = int(id)
+    parsed_id = try_parse_id(id)
     
     # Validate that account with id exists
-    account = Account.find(parsed_id)
-    if account == None:
-        return "Account not found", status.HTTP_404_NOT_FOUND
+    account = try_get_account(parsed_id)
     
     # Return account
     return account.serialize(), status.HTTP_200_OK
@@ -93,25 +99,20 @@ def read_account(id):
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
 
-# ... place you code here to UPDATE an account ...
 @app.route("/accounts/<id>", methods=["PUT"])
 def update_account(id):
     """
     Update an account
-    This end point will update an Account based on the posted data
+    This end point will update the Account based on the posted data
     """
     # Log request
     app.logger.info(f"Request to update an Account with id: {id}")
     
     # Validate that id is a number
-    if not id.isnumeric():
-        return "Id parameter must be numeric", status.HTTP_400_BAD_REQUEST
-    parsed_id = int(id)
+    parsed_id = try_parse_id(id)
     
     # Validate that account with id exists
-    account = Account.find(parsed_id)
-    if account == None:
-        return "Account not found", status.HTTP_404_NOT_FOUND
+    account = try_get_account(parsed_id)
     
     # Update account
     account.deserialize(request.get_json())
@@ -124,13 +125,29 @@ def update_account(id):
 # DELETE AN ACCOUNT
 ######################################################################
 
-# ... place you code here to DELETE an account ...
+@app.route("/accounts/<id>", methods=["DELETE"])
+def delete_account(id):
+    """
+    Delete an account
+    This end point will delete the Account with the given id
+    """
+    app.logger.info(f"Request to delete an Account with id: {id}")
+
+    # Validate that id is a number
+    parsed_id = try_parse_id(id)
+    
+    # Validate that account with id exists
+    account = try_get_account(parsed_id)
+
+    # delete account
+    account.delete()
+
+    return "", status.HTTP_204_NO_CONTENT
 
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
-
 
 def check_content_type(media_type):
     """Checks that the media type is correct"""
@@ -142,3 +159,19 @@ def check_content_type(media_type):
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {media_type}",
     )
+
+def try_parse_id(id):
+    """ Tries to parse id if valid """
+    if not id.isnumeric():
+        app.logger.error(f"Id not valid: {id}")
+        abort(status.HTTP_400_BAD_REQUEST, "Id parameter must be numeric")
+    parsed_id = int(id)
+    return parsed_id
+
+def try_get_account(id):
+    """ Tries to get account with id if exists"""
+    account = Account.find(id)
+    if account == None:
+        app.logger.error(f"Account with id not found: {id}")
+        abort(status.HTTP_404_NOT_FOUND, "Account not found")
+    return account
