@@ -132,7 +132,7 @@ def delete_account(id):
     This end point will delete the Account with the given id
     """
     app.logger.info(f"Request to delete an Account with id: {id}")
-
+    
     # Validate that id is a number
     parsed_id = try_parse_id(id)
     

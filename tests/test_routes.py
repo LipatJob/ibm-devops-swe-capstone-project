@@ -133,11 +133,11 @@ class TestAccountService(TestCase):
 
         # When I view the interface for all accounts
         response = self.client.get("/accounts")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
         response_accounts = [account for account in response.get_json()]
         response_ids = {account["id"] for account in response_accounts}
 
         # Then I should be able to see all three accounts with ids 1, 2, and 3 in the service
-        self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(len(created_accounts), len(response_accounts))
         self.assertSetEqual(generated_ids, response_ids)
         
@@ -247,3 +247,14 @@ class TestAccountService(TestCase):
         """ It should validate that the id to delete is valid """
         response = self.client.delete(f"/accounts/sample")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+
+    def test_method_not_allowed(self):
+        self._create_accounts(3)
+
+        # DELETE /account is not allowed
+        response = self.client.delete(f"/accounts")
+        self.assertEqual(status.HTTP_405_METHOD_NOT_ALLOWED, response.status_code)
+
+        # PUT /account is not allowed
+        response = self.client.put(f"/accounts")
+        self.assertEqual(status.HTTP_405_METHOD_NOT_ALLOWED, response.status_code)
