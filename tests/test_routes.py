@@ -166,7 +166,7 @@ class TestAccountService(TestCase):
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
     
     def test_read_invalid_account_id(self):
-        """ It should validate that the id is valid """
+        """ It should validate that the id to read is valid """
         response = self.client.get(f"/accounts/sample")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
@@ -209,6 +209,41 @@ class TestAccountService(TestCase):
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
     
     def test_update_invalid_account_id(self):
-        """ It should validate that the id is valid """
+        """ It should validate that the id to update is valid """
         response = self.client.put(f"/accounts/sample")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+
+    def test_delete_account(self):
+        """ It should be able to delete an account"""
+        # Given an account from the service
+        created_account = AccountFactory()
+        create_response = self.client.post("/accounts", json=created_account.serialize())
+        self.assertEqual(status.HTTP_201_CREATED, create_response.status_code)
+        created_account = create_response.get_json()
+
+        # When I delete the account
+        delete_response = self.client.delete(f"/accounts/{created_account['id']}")
+        self.assertEqual(status.HTTP_204_NO_CONTENT, delete_response.status_code)
+        
+        # Then I shouldn't be able to view and interact with the account anymore
+        # Cannot View
+        view_response = self.client.get(f"/accounts/{created_account['id']}")
+        self.assertEqual(status.HTTP_404_NOT_FOUND, view_response.status_code)
+
+        # Cannot update
+        update_response = self.client.put(f"/accounts/{created_account['id']}")
+        self.assertEqual(status.HTTP_404_NOT_FOUND, update_response.status_code)
+
+        # Cannot delete
+        delete_response = self.client.delete(f"/accounts/{created_account['id']}")
+        self.assertEqual(status.HTTP_404_NOT_FOUND, delete_response.status_code)
+
+    def test_delete_account_does_not_exist(self):
+        """ It shouldn't delete an account that doesn't exist """
+        response = self.client.delete(f"/accounts/1")
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+    
+    def test_delete_invalid_account_id(self):
+        """ It should validate that the id to delete is valid """
+        response = self.client.delete(f"/accounts/sample")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
