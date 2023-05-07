@@ -136,9 +136,35 @@ class TestAccountService(TestCase):
         response_ids = {account["id"] for account in response_accounts}
 
         # Then I should be able to see all three accounts with ids 1, 2, and 3 in the service
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(len(created_accounts), len(response_accounts))
         self.assertSetEqual(generated_ids, response_ids)
         
+    def test_read_account(self):
+        """ It should be able to read an account"""
+        # Given three accounts in the service with ids 1, 2 and 3
+        created_accounts = self._create_accounts(3)
+        account_to_view = created_accounts[1]
 
-        
+        # When I read the account with id 2
+        response = self.client.get(f"/accounts/{account_to_view.id}")
+        response_account = response.get_json()
+
+        # Then I should be able to see all information of the account with id 2
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(response_account["id"], account_to_view.id)
+        self.assertEqual(response_account["name"], account_to_view.name)
+        self.assertEqual(response_account["email"], account_to_view.email)
+        self.assertEqual(response_account["address"], account_to_view.address)
+        self.assertEqual(response_account["phone_number"], account_to_view.phone_number)
+        self.assertEqual(response_account["date_joined"], account_to_view.date_joined.strftime("%Y-%m-%d"))
+    
+    def test_read_account_does_not_exist(self):
+        """ It shouldn't read an account that doesn't exist """
+        response = self.client.get(f"/accounts/1")
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+    
+    def test_read_invalid_account_id(self):
+        # It should validate that the id is valid
+        response = self.client.get(f"/accounts/sample")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)

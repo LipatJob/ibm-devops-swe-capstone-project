@@ -73,6 +73,20 @@ def list_accounts():
 ######################################################################
 
 # ... place you code here to READ an account ...
+@app.route("/accounts/<id>", methods=["GET"])
+def read_account(id):
+    # Validate that id is a number
+    if not id.isnumeric():
+        return "Id parameter must be numeric", status.HTTP_400_BAD_REQUEST
+    parsed_id = int(id)
+    
+    # Validate that account with id exists
+    account = Account.find(parsed_id)
+    if account == None:
+        return "Account not found", status.HTTP_404_NOT_FOUND
+    
+    # Return account
+    return account.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
