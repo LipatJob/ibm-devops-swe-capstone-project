@@ -13,6 +13,8 @@ from . import app  # Import Flask application
 ############################################################
 # Health Endpoint
 ############################################################
+
+
 @app.route("/health")
 def health():
     """Health Status"""
@@ -22,6 +24,8 @@ def health():
 ######################################################################
 # GET INDEX
 ######################################################################
+
+
 @app.route("/")
 def index():
     """Root URL response"""
@@ -38,11 +42,13 @@ def index():
 ######################################################################
 # CREATE A NEW ACCOUNT
 ######################################################################
+
+
 @app.route("/accounts", methods=["POST"])
 def create_accounts():
     """
     Creates an Account
-    This endpoint will create an Account based the data in the body that is posted
+    This endpoint will create an Account based the data in the body
     """
     app.logger.info("Request to create an Account")
     check_content_type("application/json")
@@ -51,7 +57,6 @@ def create_accounts():
     account.create()
     message = account.serialize()
     # Uncomment once get_accounts has been implemented
-    # location_url = url_for("get_accounts", account_id=account.id, _external=True)
     location_url = "/"  # Remove once get_accounts has been implemented
     return make_response(
         jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
@@ -61,13 +66,14 @@ def create_accounts():
 # LIST ALL ACCOUNTS
 ######################################################################
 
+
 @app.route("/accounts", methods=["GET"])
 def list_accounts():
     """
     List all account
     This end point will return the information of all accounts
     """
-    app.logger.info(f"Request to view all Accounts")
+    app.logger.info("Request to view all Accounts")
 
     accounts = Account.all()
     accounts_serializable = [account.serialize() for account in accounts]
@@ -77,6 +83,7 @@ def list_accounts():
 # READ AN ACCOUNT
 ######################################################################
 
+
 @app.route("/accounts/<id>", methods=["GET"])
 def read_account(id):
     """
@@ -84,13 +91,10 @@ def read_account(id):
     This end point will return the information of the Account with the given id
     """
     app.logger.info(f"Request to view an Account with id: {id}")
-
     # Validate that id is a number
     parsed_id = try_parse_id(id)
-    
     # Validate that account with id exists
     account = try_get_account(parsed_id)
-    
     # Return account
     return account.serialize(), status.HTTP_200_OK
 
@@ -98,6 +102,7 @@ def read_account(id):
 ######################################################################
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
+
 
 @app.route("/accounts/<id>", methods=["PUT"])
 def update_account(id):
@@ -107,23 +112,20 @@ def update_account(id):
     """
     # Log request
     app.logger.info(f"Request to update an Account with id: {id}")
-    
     # Validate that id is a number
     parsed_id = try_parse_id(id)
-    
     # Validate that account with id exists
     account = try_get_account(parsed_id)
-    
     # Update account
     account.deserialize(request.get_json())
     account.update()
-
     return account.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
 # DELETE AN ACCOUNT
 ######################################################################
+
 
 @app.route("/accounts/<id>", methods=["DELETE"])
 def delete_account(id):
@@ -132,16 +134,12 @@ def delete_account(id):
     This end point will delete the Account with the given id
     """
     app.logger.info(f"Request to delete an Account with id: {id}")
-    
     # Validate that id is a number
     parsed_id = try_parse_id(id)
-    
     # Validate that account with id exists
     account = try_get_account(parsed_id)
-
     # delete account
     account.delete()
-
     return "", status.HTTP_204_NO_CONTENT
 
 
@@ -160,6 +158,7 @@ def check_content_type(media_type):
         f"Content-Type must be {media_type}",
     )
 
+
 def try_parse_id(id):
     """ Tries to parse id if valid """
     if not id.isnumeric():
@@ -168,10 +167,11 @@ def try_parse_id(id):
     parsed_id = int(id)
     return parsed_id
 
+
 def try_get_account(id):
     """ Tries to get account with id if exists"""
     account = Account.find(id)
-    if account == None:
+    if account is None:
         app.logger.error(f"Account with id not found: {id}")
         abort(status.HTTP_404_NOT_FOUND, "Account not found")
     return account
