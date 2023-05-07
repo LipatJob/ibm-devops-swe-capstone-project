@@ -26,3 +26,7 @@ coverage==7.1.0
 
 # Utilities
 httpie==3.2.1
+
+# Security
+flask-talisman==1.0.0
+Flask-Cors==3.0.10
