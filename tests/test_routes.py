@@ -12,6 +12,7 @@ from tests.factories import AccountFactory
 from service.common import status  # HTTP Status Codes
 from service.models import db, Account, init_db
 from service.routes import app
+from datetime import date
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
@@ -165,6 +166,49 @@ class TestAccountService(TestCase):
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
     
     def test_read_invalid_account_id(self):
-        # It should validate that the id is valid
+        """ It should validate that the id is valid """
         response = self.client.get(f"/accounts/sample")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+
+    def test_update_account(self):
+        """ It should be able to update an account """
+        # Given an account
+        created_account = AccountFactory()
+        create_response = self.client.post("/accounts", json=created_account.serialize())
+        self.assertEqual(status.HTTP_201_CREATED, create_response.status_code)
+        created_account = create_response.get_json()
+        original_account = created_account.copy()
+
+        # When I update the information of the account with new and different information
+        created_account["name"] = "Other Name"
+        created_account["email"] = "other@email.com"
+        created_account["address"] = "other address"
+        created_account["phone_number"] = "0911111"
+        created_account["date_joined"] = "1999-01-01"
+        update_response = self.client.put(f"/accounts/{created_account['id']}", json=created_account)
+        self.assertEqual(status.HTTP_200_OK, update_response.status_code)
+        updated_account = update_response.get_json()
+
+        # Then the information must have changed when I view the account again 
+        self.assertNotEqual(original_account["name"], updated_account["name"])
+        self.assertNotEqual(original_account["email"], updated_account["email"])
+        self.assertNotEqual(original_account["address"], updated_account["address"])
+        self.assertNotEqual(original_account["phone_number"], updated_account["phone_number"])
+        self.assertNotEqual(original_account["date_joined"], updated_account["date_joined"])
+
+        # and the information on the account must be equal to the new information I set it
+        self.assertEqual(created_account["name"], updated_account["name"])
+        self.assertEqual(created_account["email"], updated_account["email"])
+        self.assertEqual(created_account["address"], updated_account["address"])
+        self.assertEqual(created_account["phone_number"], updated_account["phone_number"])
+        self.assertEqual(created_account["date_joined"], updated_account["date_joined"])
+
+    def test_update_account_does_not_exist(self):
+        """ It shouldn't update an account that doesn't exist """
+        response = self.client.put(f"/accounts/1")
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+    
+    def test_update_invalid_account_id(self):
+        """ It should validate that the id is valid """
+        response = self.client.put(f"/accounts/sample")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)

@@ -94,6 +94,30 @@ def read_account(id):
 ######################################################################
 
 # ... place you code here to UPDATE an account ...
+@app.route("/accounts/<id>", methods=["PUT"])
+def update_account(id):
+    """
+    Update an account
+    This end point will update an Account based on the posted data
+    """
+    # Log request
+    app.logger.info(f"Request to update an Account with id: {id}")
+    
+    # Validate that id is a number
+    if not id.isnumeric():
+        return "Id parameter must be numeric", status.HTTP_400_BAD_REQUEST
+    parsed_id = int(id)
+    
+    # Validate that account with id exists
+    account = Account.find(parsed_id)
+    if account == None:
+        return "Account not found", status.HTTP_404_NOT_FOUND
+    
+    # Update account
+    account.deserialize(request.get_json())
+    account.update()
+
+    return account.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
