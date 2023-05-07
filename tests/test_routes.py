@@ -13,12 +13,15 @@ from service.common import status  # HTTP Status Codes
 from service.models import db, Account, init_db
 from service.routes import app
 from datetime import date
+from service import talisman
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
 )
 
 BASE_URL = "/accounts"
+
+HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 
 
 ######################################################################
@@ -35,6 +38,7 @@ class TestAccountService(TestCase):
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
         init_db(app)
+        talisman.force_https = False
 
     @classmethod
     def tearDownClass(cls):
@@ -162,12 +166,12 @@ class TestAccountService(TestCase):
     
     def test_read_account_does_not_exist(self):
         """ It shouldn't read an account that doesn't exist """
-        response = self.client.get(f"/accounts/1")
+        response = self.client.get("/accounts/1")
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
     
     def test_read_invalid_account_id(self):
         """ It should validate that the id to read is valid """
-        response = self.client.get(f"/accounts/sample")
+        response = self.client.get("/accounts/sample")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_update_account(self):
@@ -240,12 +244,12 @@ class TestAccountService(TestCase):
 
     def test_delete_account_does_not_exist(self):
         """ It shouldn't delete an account that doesn't exist """
-        response = self.client.delete(f"/accounts/1")
+        response = self.client.delete("/accounts/1")
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
     
     def test_delete_invalid_account_id(self):
         """ It should validate that the id to delete is valid """
-        response = self.client.delete(f"/accounts/sample")
+        response = self.client.delete("/accounts/sample")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_method_not_allowed(self):
@@ -258,3 +262,16 @@ class TestAccountService(TestCase):
         # PUT /account is not allowed
         response = self.client.put(f"/accounts")
         self.assertEqual(status.HTTP_405_METHOD_NOT_ALLOWED, response.status_code)
+
+    def test_secure_headers(self):
+        """ It should have secure headers """
+        response = self.client.get("/?environ_overrides=HTTPS_ENVIRON")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        expected_headers = {
+            'X-Frame-Options': 'SAMEORIGIN',
+            'X-XSS-Protection': '1; mode=block',
+            'X-Content-Type-Options': 'nosniff',
+            'Content-Security-Policy': 'default-src \'self\'; object-src \'none\'',
+            'Referrer-Policy': 'strict-origin-when-cross-origin'
+        }
+        self.assertDictContainsSubset(expected_headers, response.headers)
