@@ -1,4 +1,4 @@
-# DevOps Capstone Template
+# IBM DevOps and Software Engineering Capstone
 
 ![Build Status](https://github.com/LipatJob/devops-capstone-project/actions/workflows/ci-build.yaml/badge.svg)
 
